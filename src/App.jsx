@@ -1,60 +1,85 @@
-import { useState, useEffect } from 'react';
-import './App.css';
-import { db } from './firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { useState, useEffect } from "react";
+import "./App.css";
+import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "./firebase"; // Adjust the path if your firebase.js is elsewhere
 
 function App() {
-  const [comment, setComment] = useState('');
-  const [comments, setComments] = useState([]);
+  const [comments, setComments] = useState([]); // State to store all comments
+  const [newComment, setNewComment] = useState(""); // State for the new comment input
 
-  // Fetch all comments on mount
+  // Fetch comments from Firestore when the app loads
   useEffect(() => {
     const fetchComments = async () => {
-      const snapshot = await getDocs(collection(db, 'comments'));
-      const commentsArray = snapshot.docs.map(doc => ({
+      const snapshot = await getDocs(collection(db, "comments"));
+      const data = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
-      setComments(commentsArray);
+      setComments(data);
     };
     fetchComments();
   }, []);
 
-  // Add a new comment
+  // Add a new comment to Firestore
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!comment.trim()) return;
-    await addDoc(collection(db, 'comments'), {
-      text: comment,
-      createdAt: new Date()
+    if (!newComment.trim()) return; // Ignore empty submissions
+
+    // Save the new comment to Firestore
+    await addDoc(collection(db, "comments"), {
+      text: newComment,
+      createdAt: serverTimestamp(),
     });
-    setComment('');
-    // Optional: re-fetch or just push to local state
-    const snapshot = await getDocs(collection(db, 'comments'));
-    setComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+    setNewComment(""); // Clear the input field
+
+    // Re-fetch comments to display the new one (for simplicity, not real-time)
+    const snapshot = await getDocs(collection(db, "comments"));
+    const data = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setComments(data);
   };
 
   return (
-    <div style={{ margin: '2rem' }}>
-      <h1>Jarred Portfolio</h1>
-      <p>Hello World! This is a simple React + Firebase test.</p>
+    <div className="app-container">
+      <header>
+        <h1>Jarred Portfolio Demo</h1>
+        <div className="links">
+          <a href="https://github.com/Drexjar" target="_blank" rel="noopener noreferrer">
+            GitHub
+          </a>
+          <a href="www.linkedin.com/in/jarred-donaldson-75638a32b" target="_blank" rel="noopener noreferrer">
+            LinkedIn
+          </a>
+        </div>
+      </header>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Add a comment..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-        />
-        <button type="submit">Submit</button>
-      </form>
+      <main>
+        <form onSubmit={handleSubmit} className="comment-form">
+          <input
+            type="text"
+            placeholder="Leave a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+          />
+          <button type="submit">Submit</button>
+        </form>
 
-      <h2>Comments:</h2>
-      <ul>
-        {comments.map((c) => (
-          <li key={c.id}>{c.text}</li>
-        ))}
-      </ul>
+        <section className="comments-section">
+          <h2>Comments:</h2>
+          <ul>
+            {comments.map((comment) => (
+              <li key={comment.id}>{comment.text}</li>
+            ))}
+          </ul>
+        </section>
+      </main>
+
+      <footer>
+        <p>© 2025 Jarred Portfolio. Built with React and Firebase.</p>
+      </footer>
     </div>
   );
 }

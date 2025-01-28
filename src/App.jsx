@@ -1,86 +1,55 @@
 import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
 import "./App.css";
-import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase"; // Adjust the path if your firebase.js is elsewhere
+import Home from "./Home";
+import AdminLogin from "./AdminLogin";
+import Dashboard from "./Dashboard";
+import ProtectedRoute from "./ProtectedRoute";
 
 function App() {
-  const [comments, setComments] = useState([]); // State to store all comments
-  const [newComment, setNewComment] = useState(""); // State for the new comment input
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Fetch comments from Firestore when the app loads
+  // Check Firebase auth state on mount/changes
   useEffect(() => {
-    const fetchComments = async () => {
-      const snapshot = await getDocs(collection(db, "comments"));
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setComments(data);
-    };
-    fetchComments();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const idTokenResult = await user.getIdTokenResult();
+        // Assumes a custom claim "admin" was set on the user
+        setIsAdmin(idTokenResult.claims.admin || false);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Add a new comment to Firestore
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return; // Ignore empty submissions
-
-    // Save the new comment to Firestore
-    await addDoc(collection(db, "comments"), {
-      text: newComment,
-      createdAt: serverTimestamp(),
-    });
-
-    setNewComment(""); // Clear the input field
-
-    // Re-fetch comments to display the new one (for simplicity, not real-time)
-    const snapshot = await getDocs(collection(db, "comments"));
-    const data = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setComments(data);
-  };
-
   return (
-    <div className="app-container">
-      <header>
-        <h1>Jarred Portfolio Demo</h1>
-        <div className="links">
-          <a href="https://github.com/Drexjar" target="_blank" rel="noopener noreferrer">
-            GitHub
-          </a>
-          <a href="www.linkedin.com/in/jarred-donaldson-75638a32b" target="_blank" rel="noopener noreferrer">
-            LinkedIn
-          </a>
-        </div>
-      </header>
+    <Router>
+      <Routes>
+        {/* Public portfolio page */}
+        <Route path="/" element={<Home />} />
 
-      <main>
-        <form onSubmit={handleSubmit} className="comment-form">
-          <input
-            type="text"
-            placeholder="Leave a comment..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
-          <button type="submit">Submit</button>
-        </form>
+        {/* Admin login page */}
+        <Route path="/admin" element={<AdminLogin />} />
 
-        <section className="comments-section">
-          <h2>Comments:</h2>
-          <ul>
-            {comments.map((comment) => (
-              <li key={comment.id}>{comment.text}</li>
-            ))}
-          </ul>
-        </section>
-      </main>
+        {/* Protected dashboard (only for admin users) */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute isAdmin={isAdmin}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      <footer>
-        <p>© 2025 Jarred Portfolio. Built with React and Firebase.</p>
-      </footer>
-    </div>
+        {/* 
+          You can add a catch-all or other routes here if desired.
+          For example: <Route path="*" element={<NotFound />} /> 
+        */}
+      </Routes>
+    </Router>
   );
 }
 

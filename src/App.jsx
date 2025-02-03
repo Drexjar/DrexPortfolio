@@ -1,3 +1,4 @@
+import './i18n'; // Add this at the top
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
@@ -7,6 +8,7 @@ import Home from "./Home";
 import AdminLogin from "./AdminLogin";
 import Dashboard from "./Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
+
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);

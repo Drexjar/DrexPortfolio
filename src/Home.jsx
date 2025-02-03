@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import "./App.css";
 
 function Home() {
+  const { t, i18n } = useTranslation();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [profilePicture] = useState("public/Images/1728364921486.jpg");
-  // Fetch public comments from Firestore
+  const [currentLang, setCurrentLang] = useState(i18n.language);
+
   useEffect(() => {
     const fetchComments = async () => {
       const snapshot = await getDocs(collection(db, "comments"));
@@ -17,13 +20,11 @@ function Home() {
         id: doc.id,
         ...doc.data(),
       }));
-      // Only show comments with status "public"
       setComments(data.filter((comment) => comment.status === "public"));
     };
     fetchComments();
   }, []);
 
-  // Submit new comment (default "pending" status)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim() || !firstName.trim() || !lastName.trim()) {
@@ -35,129 +36,118 @@ function Home() {
       text: newComment,
       firstName,
       lastName,
-      status: "pending", // new comments are pending by default
+      status: "pending",
       createdAt: serverTimestamp(),
     });
 
     setNewComment("");
     setFirstName("");
     setLastName("");
-    alert("Comment submitted for review!");
+    alert(t('comments.alert'));
+  };
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+    setCurrentLang(lng);
   };
 
   return (
     <div className="app-container">
       <header>
-        <h1>Jarred Portfolio</h1>
+        <h1>{t('header.title')}</h1>
         <div className="links">
+          <div className="language-switcher">
+            <button onClick={() => changeLanguage('en')}>EN</button>
+            <button onClick={() => changeLanguage('fr')}>FR</button>
+          </div>
           <a
             href="https://github.com/Drexjar"
             target="_blank"
             rel="noopener noreferrer"
           >
-            GitHub
+            {t('header.github')}
           </a>
           <a
             href="https://www.linkedin.com/in/jarred-donaldson-75638a32b/"
             target="_blank"
             rel="noopener noreferrer"
           >
-            LinkedIn
+            {t('header.linkedin')}
           </a>
-          {/* Link to the admin login page (separate route) */}
           <a href="/admin" className="admin-view-link">
-            Admin View
+            {t('header.adminView')}
           </a>
         </div>
       </header>
 
-      {/* About Me Section */}
       <section className="about-me">
         <img src={profilePicture} alt="Jarred Donaldson" />
         <div>
-          <h2>About Me</h2>
-          <p>
-            Hi, I’m Jarred! I’m a Computer Science student at Champlain
-            College Saint-Lambert. I’m passionate about developing
-            innovative solutions, designing intuitive interfaces, and
-            delivering impactful results. I’ve worked on a variety of
-            projects ranging from pet clinic management systems to
-            modernizing business platforms. Outside of tech, I’m a football
-            team member and love tackling challenges both on and off the
-            field.
-          </p>
+          <h2>{t('aboutMe.title')}</h2>
+          <p>{t('aboutMe.description')}</p>
           <a
-            href="public/Documents/Jarred_Donaldson_CV.pdf"
+            href={currentLang === 'en' 
+              ? "public/Documents/Jarred_Donaldson_CV_EN.pdf" 
+              : "public/Documents/Jarred_Donaldson_CV_FR.pdf"}
             download
             className="download-btn"
           >
-            Download My CV
+            {t('aboutMe.downloadCV')}
           </a>
         </div>
       </section>
 
-      {/* Projects Section */}
       <section className="projects">
-        <h2>Projects</h2>
+        <h2>{t('projects.title')}</h2>
         <div className="project">
-          <h3>C CLEAN INC. Digital Platform</h3>
+          <h3>{t('projects.project1.title')}</h3>
           <p>
-            Modernizing company operations with a centralized platform for
-            CRM and employee scheduling.
+            {t('projects.project1.description')}
             <br />
-            <strong>Technologies:</strong> React, Spring Boot, Agile
-            Methodologies
+            <strong>{t('projects.project1.technologies')}</strong>
           </p>
         </div>
         <div className="project">
-          <h3>Pet Clinic Management System</h3>
+          <h3>{t('projects.project2.title')}</h3>
           <p>
-            A microservices-based veterinary management system. Contributed
-            to both front-end (React) and back-end (Spring Boot)
-            development.
+            {t('projects.project2.description')}
             <br />
-            <strong>Technologies:</strong> React, Spring Boot, CI/CD
-            Pipelines
+            <strong>{t('projects.project2.technologies')}</strong>
           </p>
         </div>
       </section>
 
-      {/* Skills Section */}
       <section className="skills">
-        <h2>Skills</h2>
+        <h2>{t('skills.title')}</h2>
         <ul>
-          <li>Programming: Java, JavaScript, C#, SQL, HTML, CSS</li>
-          <li>Frameworks: React, Spring Boot, .NET, Unity</li>
-          <li>Tools: Docker, Azure, CI/CD Pipelines</li>
-          <li>Database Design and Administration</li>
-          <li>Mobile Development: iOS & Android</li>
-          <li>Agile/Scrum Development</li>
+          {t('skills.items', { returnObjects: true }).map((skill, index) => (
+            <li key={index}>{skill}</li>
+          ))}
         </ul>
       </section>
 
-      {/* Comments Section */}
       <section className="comments-section">
-        <h2>Testimonials/Comments</h2>
+        <h2>{t('comments.title')}</h2>
         <form onSubmit={handleSubmit} className="comment-form">
           <input
             type="text"
-            placeholder="First Name"
+            placeholder={t('comments.firstName')}
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
           />
           <input
             type="text"
-            placeholder="Last Name"
+            placeholder={t('comments.lastName')}
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
           />
           <input
             type="text"
-            placeholder="Leave a comment..."
+            placeholder={t('comments.comment')}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
           />
-          <button type="submit">Submit</button>
+          <button type="submit">{t('comments.submit')}</button>
         </form>
         <ul>
           {comments.map((comment) => (
@@ -174,9 +164,8 @@ function Home() {
         </ul>
       </section>
 
-      {/* Footer */}
       <footer>
-        <p>© 2025 Jarred Portfolio. Built with React and Firebase.</p>
+        <p>{t('footer.text')}</p>
       </footer>
     </div>
   );

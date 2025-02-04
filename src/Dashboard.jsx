@@ -1,3 +1,4 @@
+// Dashboard.js
 import { useState, useEffect } from "react";
 import {
   collection,
@@ -5,6 +6,8 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { db, auth } from "./firebase";
 import { signOut } from "firebase/auth";
@@ -15,7 +18,7 @@ import "./App.css";
 function Dashboard() {
   const navigate = useNavigate();
   const [comments, setComments] = useState([]);
-  const [profilePicture, setProfilePicture] = useState("");
+  const [profilePictureUrl, setProfilePictureUrl] = useState("");
 
   // Fetch all comments for admin management
   useEffect(() => {
@@ -30,7 +33,35 @@ function Dashboard() {
     fetchComments();
   }, []);
 
-  // Approve / Mark pending
+  // Fetch the current profile picture URL from settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const settingsDoc = await getDoc(doc(db, "settings", "homepage"));
+      if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        setProfilePictureUrl(data.profilePicture || "");
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // Update the profile picture URL in Firestore
+  const handleProfilePictureUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      await setDoc(
+        doc(db, "settings", "homepage"),
+        { profilePicture: profilePictureUrl },
+        { merge: true }
+      );
+      alert("Profile picture updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile picture:", error.message);
+      alert("Failed to update the profile picture.");
+    }
+  };
+
+  // Approve / Mark pending for comments
   const updateStatus = async (id, status) => {
     const commentRef = doc(db, "comments", id);
     await updateDoc(commentRef, { status });
@@ -41,22 +72,11 @@ function Dashboard() {
     );
   };
 
-  // Delete comment
+  // Delete a comment
   const deleteComment = async (id) => {
     const commentRef = doc(db, "comments", id);
     await deleteDoc(commentRef);
     setComments((prev) => prev.filter((comment) => comment.id !== id));
-  };
-
-  // Simulate a profile picture upload (you’d use Firebase Storage in production)
-  const handleProfilePictureChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const newProfilePicture = URL.createObjectURL(file);
-    setProfilePicture(newProfilePicture);
-
-    alert("Profile picture updated successfully!");
   };
 
   // Logout and navigate to homepage
@@ -74,16 +94,24 @@ function Dashboard() {
       <h1>Admin Dashboard</h1>
       <button onClick={handleLogout}>Logout</button>
 
+      {/* Manage Profile Picture */}
       <section>
         <h2>Manage Profile Picture</h2>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleProfilePictureChange}
-        />
-        {profilePicture && <img src={profilePicture} alt="Profile" />}
+        <form onSubmit={handleProfilePictureUpdate}>
+          <input
+            type="text"
+            placeholder="Enter new profile picture URL"
+            value={profilePictureUrl}
+            onChange={(e) => setProfilePictureUrl(e.target.value)}
+          />
+          <button type="submit">Update Picture</button>
+        </form>
+        {profilePictureUrl && (
+          <img src={profilePictureUrl} alt="Profile" />
+        )}
       </section>
 
+      {/* Manage Comments */}
       <section>
         <h2>Manage Comments</h2>
         <ul>
@@ -112,7 +140,7 @@ function Dashboard() {
 }
 
 Dashboard.propTypes = {
-  onLogout: PropTypes.func, // Optional, can remove if not used
+  onLogout: PropTypes.func, // Optional, can be removed if unused
 };
 
 export default Dashboard;

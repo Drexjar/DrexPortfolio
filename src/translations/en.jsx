@@ -1,3 +1,4 @@
+// translations/en.js
 export default {
   header: {
     title: "Jarred Portfolio",
@@ -12,31 +13,10 @@ export default {
     downloadCV: "Download My CV"
   },
   projects: {
-    title: "Projects",
-    project1: {
-      title: "C CLEAN INC. Digital Platform",
-      description:
-        "Modernizing company operations with a centralized platform for CRM and employee scheduling.",
-      technologies:
-        "Technologies: React, Spring Boot, Agile Methodologies"
-    },
-    project2: {
-      title: "Pet Clinic Management System",
-      description:
-        "A microservices-based veterinary management system. Contributed to both front-end (React) and back-end (Spring Boot) development.",
-      technologies: "Technologies: React, Spring Boot, CI/CD Pipelines"
-    }
+    title: "Projects"
   },
   skills: {
-    title: "Skills",
-    items: [
-      "Programming: Java, JavaScript, C#, SQL, HTML, CSS",
-      "Frameworks: React, Spring Boot, .NET, Unity",
-      "Tools: Docker, Azure, CI/CD Pipelines",
-      "Database Design and Administration",
-      "Mobile Development: iOS & Android",
-      "Agile/Scrum Development"
-    ]
+    title: "Skills"
   },
   comments: {
     title: "Testimonials/Comments",

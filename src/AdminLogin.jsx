@@ -29,7 +29,7 @@ function AdminLogin() {
 
   return (
     <div className="login-section">
-      <h2>Admin Login</h2>
+      <h2>Login</h2>
       <form onSubmit={handleLogin} className="login-form">
         <input
           type="email"

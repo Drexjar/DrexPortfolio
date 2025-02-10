@@ -13,20 +13,26 @@ import { db } from "./firebase";
 import "./App.css";
 
 function Home() {
-  // 1) Set up i18n
+  // 1) i18n
   const { t, i18n } = useTranslation();
   const [currentLang, setCurrentLang] = useState(i18n.language);
 
-  // 2) Firestore state
+  // 2) Comments
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  // 3) Profile picture from Firestore
-  const [profilePicture, setProfilePicture] = useState("public/Images/1728364921486.jpg");
+  // 3) Profile picture
+  const [profilePicture, setProfilePicture] = useState(
+    "/public/Images/1728364921486.jpg"
+  );
 
-  // 4) Fetch public comments
+  // 4) Projects & Skills (Firestore)
+  const [projects, setProjects] = useState([]);
+  const [skills, setSkills] = useState([]);
+
+  // -- Fetch public comments
   useEffect(() => {
     const fetchComments = async () => {
       const snapshot = await getDocs(collection(db, "comments"));
@@ -40,41 +46,61 @@ function Home() {
     fetchComments();
   }, []);
 
-  // 5) Fetch the profile picture URL from Firestore settings
+  // -- Fetch profile picture from Firestore
   useEffect(() => {
     const fetchSettings = async () => {
       const settingsDoc = await getDoc(doc(db, "settings", "homepage"));
       if (settingsDoc.exists()) {
         const data = settingsDoc.data();
-        setProfilePicture(data.profilePicture || "public/Images/1728364921486.jpg");
+        setProfilePicture(
+          data.profilePicture || "/public/Images/1728364921486.jpg"
+        );
       }
     };
     fetchSettings();
   }, []);
 
-  // 6) Submit new comment
+  // -- Fetch projects
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const snapshot = await getDocs(collection(db, "projects"));
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setProjects(data);
+    };
+    fetchProjects();
+  }, []);
+
+  // -- Fetch skills
+  useEffect(() => {
+    const fetchSkills = async () => {
+      const snapshot = await getDocs(collection(db, "skills"));
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setSkills(data);
+    };
+    fetchSkills();
+  }, []);
+
+  // 5) Add new comment
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim() || !firstName.trim() || !lastName.trim()) {
       alert("Please fill in all fields.");
       return;
     }
-
     await addDoc(collection(db, "comments"), {
       text: newComment,
       firstName,
       lastName,
-      status: "pending", // new comments default to pending
+      status: "pending", // new comments are pending by default
       createdAt: serverTimestamp(),
     });
-
     setNewComment("");
     setFirstName("");
     setLastName("");
-    alert(t("comments.alert")); // Use translation for "Comment submitted..."
+    alert(t("comments.alert"));
   };
 
-  // 7) Change language
+  // 6) Change language
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
     setCurrentLang(lng);
@@ -82,51 +108,38 @@ function Home() {
 
   return (
     <div className="app-container">
-      {/* Header */}
+      {/* HEADER */}
       <header>
         <h1>{t("header.title")}</h1>
         <div className="links">
-          {/* Language Switcher */}
           <div className="language-switcher">
             <button onClick={() => changeLanguage("en")}>EN</button>
             <button onClick={() => changeLanguage("fr")}>FR</button>
           </div>
-
-          <a
-            href="https://github.com/Drexjar"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href="https://github.com/Drexjar" target="_blank" rel="noreferrer">
             {t("header.github")}
           </a>
           <a
             href="https://www.linkedin.com/in/jarred-donaldson-75638a32b/"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noreferrer"
           >
             {t("header.linkedin")}
           </a>
-          {/* Admin View */}
           <a href="/admin" className="admin-view-link">
-            {t("header.adminView")}
+            Login
           </a>
         </div>
       </header>
 
-      {/* About Me Section */}
+      {/* ABOUT ME */}
       <section className="about-me">
-        <img src={profilePicture} alt="Jarred Donaldson" />
+        <img src={profilePicture} alt="Profile" />
         <div>
           <h2>{t("aboutMe.title")}</h2>
           <p>{t("aboutMe.description")}</p>
-
-          {/* Example: language-specific CV link */}
           <a
-            href={
-              currentLang === "fr"
-                ? "public/Documents/Jarred_Donaldson_CV_FR.pdf"
-                : "public/Documents/Jarred_Donaldson_CV_EN.pdf"
-            }
+            href="/Documents/Jarred_Donaldson_CV.pdf"
             download
             className="download-btn"
           >
@@ -135,38 +148,40 @@ function Home() {
         </div>
       </section>
 
-      {/* Projects Section */}
+      {/* PROJECTS */}
       <section className="projects">
         <h2>{t("projects.title")}</h2>
-        <div className="project">
-          <h3>{t("projects.project1.title")}</h3>
-          <p>
-            {t("projects.project1.description")}
-            <br />
-            <strong>{t("projects.project1.technologies")}</strong>
-          </p>
-        </div>
-        <div className="project">
-          <h3>{t("projects.project2.title")}</h3>
-          <p>
-            {t("projects.project2.description")}
-            <br />
-            <strong>{t("projects.project2.technologies")}</strong>
-          </p>
-        </div>
+        {projects.map((project) => {
+          // Each project doc has {title: {en, fr}, description: {en, fr}, technologies: {en, fr}}
+          const title = project.title?.[currentLang] || "";
+          const description = project.description?.[currentLang] || "";
+          const technologies = project.technologies?.[currentLang] || "";
+          return (
+            <div className="project" key={project.id}>
+              <h3>{title}</h3>
+              <p>
+                {description}
+                <br />
+                <strong>{technologies}</strong>
+              </p>
+            </div>
+          );
+        })}
       </section>
 
-      {/* Skills Section */}
+      {/* SKILLS */}
       <section className="skills">
         <h2>{t("skills.title")}</h2>
         <ul>
-          {t("skills.items", { returnObjects: true }).map((skill, index) => (
-            <li key={index}>{skill}</li>
-          ))}
+          {skills.map((skill) => {
+            // skill.label.en, skill.label.fr
+            const label = skill.label?.[currentLang] || "";
+            return <li key={skill.id}>{label}</li>;
+          })}
         </ul>
       </section>
 
-      {/* Comments Section */}
+      {/* COMMENTS */}
       <section className="comments-section">
         <h2>{t("comments.title")}</h2>
         <form onSubmit={handleSubmit} className="comment-form">
@@ -206,7 +221,7 @@ function Home() {
         </ul>
       </section>
 
-      {/* Footer */}
+      {/* FOOTER */}
       <footer>
         <p>{t("footer.text")}</p>
       </footer>

@@ -126,12 +126,12 @@ function Home() {
           >
             {t("header.linkedin")}
           </a>
+          <a href="/contact">{t("Contact Me!")}</a>
           <a href="/admin" className="admin-view-link">
             Login
           </a>
         </div>
       </header>
-
       {/* ABOUT ME */}
       <section className="about-me">
         <img src={profilePicture} alt="Profile" />
@@ -147,7 +147,6 @@ function Home() {
           </a>
         </div>
       </section>
-
       {/* PROJECTS */}
       <section className="projects">
         <h2>{t("projects.title")}</h2>
@@ -168,7 +167,6 @@ function Home() {
           );
         })}
       </section>
-
       {/* SKILLS */}
       <section className="skills">
         <h2>{t("skills.title")}</h2>
@@ -180,7 +178,6 @@ function Home() {
           })}
         </ul>
       </section>
-
       {/* COMMENTS */}
       <section className="comments-section">
         <h2>{t("comments.title")}</h2>
@@ -220,7 +217,6 @@ function Home() {
           ))}
         </ul>
       </section>
-
       {/* FOOTER */}
       <footer>
         <p>{t("footer.text")}</p>

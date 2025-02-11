@@ -54,6 +54,8 @@ function Dashboard() {
   // 2) Comments Management
   // ---------------------
   const [comments, setComments] = useState([]);
+  // State to keep track of which comment (if any) is pending deletion
+  const [commentToDelete, setCommentToDelete] = useState(null);
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -71,14 +73,33 @@ function Dashboard() {
     const commentRef = doc(db, "comments", id);
     await updateDoc(commentRef, { status });
     setComments((prev) =>
-      prev.map((comment) => (comment.id === id ? { ...comment, status } : comment))
+      prev.map((comment) =>
+        comment.id === id ? { ...comment, status } : comment
+      )
     );
   };
 
-  const deleteComment = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) return;
+  // Delete the comment from the database without asking for confirmation.
+  const deleteCommentFromDB = async (id) => {
     await deleteDoc(doc(db, "comments", id));
     setComments((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  // Called when the user confirms deletion in the popup.
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
+    try {
+      await deleteCommentFromDB(commentToDelete);
+      setCommentToDelete(null);
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      alert("Failed to delete the comment.");
+    }
+  };
+
+  // Called when the user cancels deletion.
+  const cancelDeleteComment = () => {
+    setCommentToDelete(null);
   };
 
   // ---------------------
@@ -134,7 +155,7 @@ function Dashboard() {
       setNewProjectFrDesc("");
       setNewProjectEnTech("");
       setNewProjectFrTech("");
-      // Refresh
+      // Refresh projects list
       const snapshot = await getDocs(collection(db, "projects"));
       setProjects(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     } catch (error) {
@@ -164,14 +185,14 @@ function Dashboard() {
       });
       alert("Project updated!");
       setEditingProjectId(null);
-      // Clear
+      // Clear form
       setNewProjectEnTitle("");
       setNewProjectFrTitle("");
       setNewProjectEnDesc("");
       setNewProjectFrDesc("");
       setNewProjectEnTech("");
       setNewProjectFrTech("");
-      // Refresh
+      // Refresh projects list
       const snapshot = await getDocs(collection(db, "projects"));
       setProjects(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     } catch (error) {
@@ -222,10 +243,10 @@ function Dashboard() {
         createdAt: serverTimestamp(),
       });
       alert("Skill added!");
-      // Clear
+      // Clear form
       setNewSkillEnLabel("");
       setNewSkillFrLabel("");
-      // Refresh
+      // Refresh skills list
       const snapshot = await getDocs(collection(db, "skills"));
       setSkills(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     } catch (error) {
@@ -249,10 +270,10 @@ function Dashboard() {
       });
       alert("Skill updated!");
       setEditingSkillId(null);
-      // Clear
+      // Clear form
       setNewSkillEnLabel("");
       setNewSkillFrLabel("");
-      // Refresh
+      // Refresh skills list
       const snapshot = await getDocs(collection(db, "skills"));
       setSkills(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     } catch (error) {
@@ -289,7 +310,9 @@ function Dashboard() {
   return (
     <div className="dashboard-container">
       <h1>Admin Dashboard</h1>
-      <button onClick={handleLogout}>Logout</button>
+      <button type="button" onClick={handleLogout}>
+        Logout
+      </button>
 
       {/* ====== PROFILE PICTURE ====== */}
       <section>
@@ -314,8 +337,15 @@ function Dashboard() {
             <li key={project.id}>
               <strong>EN: {project.title.en}</strong> | FR: {project.title.fr}
               <br />
-              <button onClick={() => handleEditProject(project)}>Edit</button>
-              <button onClick={() => handleDeleteProject(project.id)}>Delete</button>
+              <button type="button" onClick={() => handleEditProject(project)}>
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteProject(project.id)}
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>
@@ -323,52 +353,60 @@ function Dashboard() {
         <h3>{editingProjectId ? "Edit Project" : "Add a New Project"}</h3>
         <form onSubmit={editingProjectId ? handleUpdateProject : handleAddProject}>
           <div>
-            <label>Title (EN):</label>
+            <label htmlFor="projectEnTitle">Title (EN):</label>
             <input
+              id="projectEnTitle"
               type="text"
               value={newProjectEnTitle}
               onChange={(e) => setNewProjectEnTitle(e.target.value)}
             />
           </div>
           <div>
-            <label>Title (FR):</label>
+            <label htmlFor="projectFrTitle">Title (FR):</label>
             <input
+              id="projectFrTitle"
               type="text"
               value={newProjectFrTitle}
               onChange={(e) => setNewProjectFrTitle(e.target.value)}
             />
           </div>
           <div>
-            <label>Description (EN):</label>
+            <label htmlFor="projectEnDesc">Description (EN):</label>
             <textarea
+              id="projectEnDesc"
               value={newProjectEnDesc}
               onChange={(e) => setNewProjectEnDesc(e.target.value)}
             />
           </div>
           <div>
-            <label>Description (FR):</label>
+            <label htmlFor="projectFrDesc">Description (FR):</label>
             <textarea
+              id="projectFrDesc"
               value={newProjectFrDesc}
               onChange={(e) => setNewProjectFrDesc(e.target.value)}
             />
           </div>
           <div>
-            <label>Technologies (EN):</label>
+            <label htmlFor="projectEnTech">Technologies (EN):</label>
             <input
+              id="projectEnTech"
               type="text"
               value={newProjectEnTech}
               onChange={(e) => setNewProjectEnTech(e.target.value)}
             />
           </div>
           <div>
-            <label>Technologies (FR):</label>
+            <label htmlFor="projectFrTech">Technologies (FR):</label>
             <input
+              id="projectFrTech"
               type="text"
               value={newProjectFrTech}
               onChange={(e) => setNewProjectFrTech(e.target.value)}
             />
           </div>
-          <button type="submit">{editingProjectId ? "Update Project" : "Add Project"}</button>
+          <button type="submit">
+            {editingProjectId ? "Update Project" : "Add Project"}
+          </button>
         </form>
       </section>
 
@@ -380,8 +418,12 @@ function Dashboard() {
             <li key={skill.id}>
               <strong>EN: {skill.label.en}</strong> | FR: {skill.label.fr}
               <br />
-              <button onClick={() => handleEditSkill(skill)}>Edit</button>
-              <button onClick={() => handleDeleteSkill(skill.id)}>Delete</button>
+              <button type="button" onClick={() => handleEditSkill(skill)}>
+                Edit
+              </button>
+              <button type="button" onClick={() => handleDeleteSkill(skill.id)}>
+                Delete
+              </button>
             </li>
           ))}
         </ul>
@@ -389,22 +431,26 @@ function Dashboard() {
         <h3>{editingSkillId ? "Edit Skill" : "Add a New Skill"}</h3>
         <form onSubmit={editingSkillId ? handleUpdateSkill : handleAddSkill}>
           <div>
-            <label>Label (EN):</label>
+            <label htmlFor="skillEnLabel">Label (EN):</label>
             <input
+              id="skillEnLabel"
               type="text"
               value={newSkillEnLabel}
               onChange={(e) => setNewSkillEnLabel(e.target.value)}
             />
           </div>
           <div>
-            <label>Label (FR):</label>
+            <label htmlFor="skillFrLabel">Label (FR):</label>
             <input
+              id="skillFrLabel"
               type="text"
               value={newSkillFrLabel}
               onChange={(e) => setNewSkillFrLabel(e.target.value)}
             />
           </div>
-          <button type="submit">{editingSkillId ? "Update Skill" : "Add Skill"}</button>
+          <button type="submit">
+            {editingSkillId ? "Update Skill" : "Add Skill"}
+          </button>
         </form>
       </section>
 
@@ -421,17 +467,43 @@ function Dashboard() {
                 {comment.text}
               </p>
               <p>Status: {comment.status}</p>
-              <button onClick={() => updateStatus(comment.id, "public")}>
+              <button
+                type="button"
+                onClick={() => updateStatus(comment.id, "public")}
+              >
                 Approve
               </button>
-              <button onClick={() => updateStatus(comment.id, "pending")}>
+              <button
+                type="button"
+                onClick={() => updateStatus(comment.id, "pending")}
+              >
                 Mark as Pending
               </button>
-              <button onClick={() => deleteComment(comment.id)}>Delete</button>
+              <button
+                type="button"
+                onClick={() => setCommentToDelete(comment.id)}
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>
       </section>
+
+      {/* ====== DELETE COMMENT POPUP ====== */}
+      {commentToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <p>Are you sure you want to delete this comment?</p>
+            <button type="button" onClick={confirmDeleteComment}>
+              Yes, Delete
+            </button>
+            <button type="button" onClick={cancelDeleteComment}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

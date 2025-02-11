@@ -330,3 +330,176 @@ h2 {
 .language-switcher button:hover {
   color: #4dd0e1;
 }
+
+/* Responsive adjustments for tablets and medium screens */
+@media (max-width: 768px) {
+  /* Adjust container padding and gaps */
+  .app-container {
+    padding: 20px;
+    gap: 20px;
+  }
+  
+  /* Stack header elements vertically */
+  header {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  header h1 {
+    font-size: 2.5rem;
+  }
+  
+  .links a {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+  
+  /* Stack About Me content and center-align text */
+  .about-me {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .about-me img {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .about-me div {
+    margin-top: 15px;
+  }
+  
+  /* Slightly reduce padding in project cards */
+  .project {
+    padding: 15px;
+  }
+  
+  /* Adjust skills grid layout for fewer columns */
+  .skills ul {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  /* Ensure input fields are full-width if necessary */
+  .comment-form input,
+  .login-form input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Adjust dashboard image size */
+  .dashboard-container img {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* Responsive adjustments for small mobile devices */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 15px;
+    gap: 15px;
+  }
+  
+  header h1 {
+    font-size: 2rem;
+  }
+  
+  .links a {
+    font-size: 0.9rem;
+    margin-left: 5px;
+  }
+  
+  .about-me img {
+    width: 120px;
+    height: 120px;
+  }
+  
+  /* Make the skills grid a single column for very narrow screens */
+  .skills ul {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Ensure buttons and inputs are comfortably tappable */
+  .comment-form input,
+  .login-form input,
+  .login-form button {
+    width: 100%;
+  }
+  
+  .login-form input {
+    padding: 8px;
+  }
+  
+  .login-form button {
+    padding: 10px;
+  }
+}
+/* Contact Page Styling */
+.contact-container {
+  padding: 20px;
+  background: rgba(30, 30, 30, 0.95);
+  border-radius: 15px;
+  box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.8);
+  max-width: 600px;
+  margin: 40px auto;
+}
+
+.contact-container h2 {
+  color: #4dd0e1;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.contact-form input,
+.contact-form textarea {
+  padding: 15px;
+  border: 1px solid #444;
+  border-radius: 10px;
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  font-size: 1rem;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: #00bcd4;
+  box-shadow: 0px 4px 10px rgba(0, 188, 212, 0.5);
+}
+
+.contact-form button {
+  padding: 15px 25px;
+  background-color: #00bcd4;
+  border: none;
+  border-radius: 10px;
+  color: #121212;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.contact-form button:hover {
+  background-color: #4dd0e1;
+  transform: scale(1.05);
+}
+
+.success-message {
+  color: #4dd0e1;
+  text-align: center;
+  margin-top: 15px;
+}
+
+.error-message {
+  color: #ff5252;
+  text-align: center;
+  margin-top: 15px;
+}

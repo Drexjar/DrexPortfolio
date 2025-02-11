@@ -26,6 +26,16 @@ export default {
     submit: "Submit",
     alert: "Comment submitted for review!"
   },
+  contact: {
+    title: "Contact Me",
+    name: "Your Name",
+    email: "Your Email",
+    message: "Your Message",
+    submit: "Send Message",
+    success: "Your message has been sent!",
+    failure: "There was an error sending your message. Please try again later."
+  },
+  
   footer: {
     text: "© 2025 Jarred Portfolio. Built with React and Firebase."
   }

@@ -26,6 +26,15 @@ export default {
     submit: "Soumettre",
     alert: "Commentaire soumis pour examen !"
   },
+  contact: {
+    title: "Contactez-moi",
+    name: "Votre nom",
+    email: "Votre email",
+    message: "Votre message",
+    submit: "Envoyer le message",
+    success: "Votre message a été envoyé !",
+    failure: "Une erreur est survenue lors de l'envoi de votre message. Veuillez réessayer plus tard."
+  },
   footer: {
     text: "© 2025 Portfolio de Jarred. Construit avec React et Firebase."
   }

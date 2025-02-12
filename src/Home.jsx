@@ -17,6 +17,13 @@ function Home() {
   const { t, i18n } = useTranslation();
   const [currentLang, setCurrentLang] = useState(i18n.language);
 
+  // Toggle language
+  const toggleLanguage = () => {
+    const newLang = currentLang === "en" ? "fr" : "en";
+    i18n.changeLanguage(newLang);
+    setCurrentLang(newLang);
+  };
+
   // 2) Comments
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -100,11 +107,6 @@ function Home() {
     alert(t("comments.alert"));
   };
 
-  // 6) Change language
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-    setCurrentLang(lng);
-  };
 
   return (
     <div className="app-container">
@@ -112,10 +114,9 @@ function Home() {
       <header>
         <h1>{t("header.title")}</h1>
         <div className="links">
-          <div className="language-switcher">
-            <button onClick={() => changeLanguage("en")}>EN</button>
-            <button onClick={() => changeLanguage("fr")}>FR</button>
-          </div>
+          <button className="language-toggle" onClick={toggleLanguage}>
+            {currentLang === "en" ? "FR" : "EN"}
+          </button>
           <a href="https://github.com/Drexjar" target="_blank" rel="noreferrer">
             {t("header.github")}
           </a>

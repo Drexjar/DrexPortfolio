@@ -1,4 +1,3 @@
-// Home.js
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,129 +10,76 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import "./App.css";
+import PropTypes from "prop-types";
 
-function Home() {
-  // 1) i18n
+/**
+ * Home – public portfolio
+ * ▸ props.currentLang comes from App
+ */
+export default function Home({ currentLang }) {
   const { t, i18n } = useTranslation();
-  const [currentLang, setCurrentLang] = useState(i18n.language);
 
-  // Toggle language
-  const toggleLanguage = () => {
-    const newLang = currentLang === "en" ? "fr" : "en";
-    i18n.changeLanguage(newLang);
-    setCurrentLang(newLang);
-  };
+  /* keep i18n in sync with parent language */
+  useEffect(() => {
+    i18n.changeLanguage(currentLang);
+  }, [currentLang, i18n]);
 
-  // 2) Comments
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-
-  // 3) Profile picture
-  const [profilePicture, setProfilePicture] = useState(
-    "/public/Images/1728364921486.jpg"
-  );
-
-  // 4) Projects & Skills (Firestore)
+  // --- Firestore state
   const [projects, setProjects] = useState([]);
   const [skills, setSkills] = useState([]);
+  const [comments, setComments] = useState([]);
 
-  // -- Fetch public comments
-  useEffect(() => {
-    const fetchComments = async () => {
-      const snapshot = await getDocs(collection(db, "comments"));
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      // Only show comments with status "public"
-      setComments(data.filter((comment) => comment.status === "public"));
-    };
-    fetchComments();
-  }, []);
+  // --- form data
+  const [firstName, setFirst] = useState("");
+  const [lastName, setLast] = useState("");
+  const [newComment, setNewComment] = useState("");
 
-  // -- Fetch profile picture from Firestore
+  // --- profile picture
+  const [profilePicture, setProfilePicture] = useState("/Images/default.jpg");
+
+  /* fetch everything once on mount */
   useEffect(() => {
-    const fetchSettings = async () => {
-      const settingsDoc = await getDoc(doc(db, "settings", "homepage"));
+    Promise.all([
+      getDocs(collection(db, "projects")),
+      getDocs(collection(db, "skills")),
+      getDocs(collection(db, "comments")),
+      getDoc(doc(db, "settings", "homepage")),
+    ]).then(([projSnap, skillSnap, commentSnap, settingsDoc]) => {
+      setProjects(projSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setSkills(skillSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setComments(
+        commentSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((c) => c.status === "public")
+      );
       if (settingsDoc.exists()) {
-        const data = settingsDoc.data();
         setProfilePicture(
-          data.profilePicture || "/public/Images/1728364921486.jpg"
+          settingsDoc.data().profilePicture || "/Images/default.jpg"
         );
       }
-    };
-    fetchSettings();
+    });
   }, []);
 
-  // -- Fetch projects
-  useEffect(() => {
-    const fetchProjects = async () => {
-      const snapshot = await getDocs(collection(db, "projects"));
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setProjects(data);
-    };
-    fetchProjects();
-  }, []);
-
-  // -- Fetch skills
-  useEffect(() => {
-    const fetchSkills = async () => {
-      const snapshot = await getDocs(collection(db, "skills"));
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setSkills(data);
-    };
-    fetchSkills();
-  }, []);
-
-  // 5) Add new comment
+  /* add comment */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newComment.trim() || !firstName.trim() || !lastName.trim()) {
-      alert("Please fill in all fields.");
-      return;
-    }
+    if (!firstName || !lastName || !newComment) return;
     await addDoc(collection(db, "comments"), {
-      text: newComment,
       firstName,
       lastName,
-      status: "pending", // new comments are pending by default
+      text: newComment,
+      status: "pending",
       createdAt: serverTimestamp(),
     });
+    setFirst("");
+    setLast("");
     setNewComment("");
-    setFirstName("");
-    setLastName("");
     alert(t("comments.alert"));
   };
 
-
   return (
-    <div className="app-container">
-      {/* HEADER */}
-      <header>
-        <h1>{t("header.title")}</h1>
-        <div className="links">
-          <button className="language-toggle" onClick={toggleLanguage}>
-            {currentLang === "en" ? "FR" : "EN"}
-          </button>
-          <a href="https://github.com/Drexjar" target="_blank" rel="noreferrer">
-            {t("header.github")}
-          </a>
-          <a
-            href="https://www.linkedin.com/in/jarred-donaldson-75638a32b/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t("header.linkedin")}
-          </a>
-          <a href="/contact">{t("Contact Me!")}</a>
-          <a href="/admin" className="admin-view-link">
-            Login
-          </a>
-        </div>
-      </header>
-      {/* ABOUT ME */}
+    <div className="page-content">
+      {/* ---------- ABOUT ME ---------- */}
       <section className="about-me">
         <img src={profilePicture} alt="Profile" />
         <div>
@@ -148,77 +94,96 @@ function Home() {
           </a>
         </div>
       </section>
-      {/* PROJECTS */}
+
+      {/* ---------- PROJECTS ---------- */}
       <section className="projects">
         <h2>{t("projects.title")}</h2>
-        {projects.map((project) => {
-          // Each project doc has {title: {en, fr}, description: {en, fr}, technologies: {en, fr}}
-          const title = project.title?.[currentLang] || "";
-          const description = project.description?.[currentLang] || "";
-          const technologies = project.technologies?.[currentLang] || "";
+
+        {projects.length === 0 && (
+          <p className="empty-note">{t("projects.none")}</p>
+        )}
+
+        {projects.map((p) => {
+          const title = p.title?.[currentLang] || "";
+          const desc = p.description?.[currentLang] || "";
+          const tech = p.technologies?.[currentLang] || "";
           return (
-            <div className="project" key={project.id}>
-              <h3>{title}</h3>
-              <p>
-                {description}
-                <br />
-                <strong>{technologies}</strong>
-              </p>
-            </div>
+            <article key={p.id} className="project-card">
+              <header>
+                <h3>{title}</h3>
+                <div className="project-links">
+                  {p.demoUrl && (
+                    <a href={p.demoUrl} target="_blank" rel="noreferrer">
+                      {t("projects.live")}
+                    </a>
+                  )}
+                  {p.codeUrl && (
+                    <a href={p.codeUrl} target="_blank" rel="noreferrer">
+                      {t("projects.code")}
+                    </a>
+                  )}
+                </div>
+              </header>
+
+              <p>{desc}</p>
+              <p className="tech-stack">{tech}</p>
+            </article>
           );
         })}
       </section>
-      {/* SKILLS */}
+
+      {/* ---------- SKILLS ---------- */}
       <section className="skills">
         <h2>{t("skills.title")}</h2>
         <ul>
-          {skills.map((skill) => {
-            // skill.label.en, skill.label.fr
-            const label = skill.label?.[currentLang] || "";
-            return <li key={skill.id}>{label}</li>;
-          })}
+          {skills.map((s) => (
+            <li key={s.id}>{s.label?.[currentLang]}</li>
+          ))}
         </ul>
       </section>
-      {/* COMMENTS */}
+
+      {/* ---------- REVIEWS ---------- */}
       <section className="comments-section">
         <h2>{t("comments.title")}</h2>
+
         <form onSubmit={handleSubmit} className="comment-form">
           <input
-            type="text"
             placeholder={t("comments.firstName")}
             value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            onChange={(e) => setFirst(e.target.value)}
           />
           <input
-            type="text"
             placeholder={t("comments.lastName")}
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            onChange={(e) => setLast(e.target.value)}
           />
           <input
-            type="text"
             placeholder={t("comments.comment")}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
           />
-          <button type="submit">{t("comments.submit")}</button>
+          <button>{t("comments.submit")}</button>
         </form>
 
-        <ul>
-          {comments.map((comment) => (
-            <li key={comment.id}>
-              <p>
-                {comment.firstName} {comment.lastName}: {comment.text}
+        <div className="review-grid">
+          {comments.map((c) => (
+            <div key={c.id} className="review-card">
+              <p className="review-meta">
+                <strong>
+                  {c.firstName} {c.lastName}
+                </strong>{" "}
+                ·{" "}
+                {c.createdAt?.seconds
+                  ? new Date(c.createdAt.seconds * 1000).toLocaleDateString()
+                  : ""}
               </p>
-              <p>
-                {comment.createdAt?.seconds &&
-                  new Date(comment.createdAt.seconds * 1000).toLocaleString()}
-              </p>
-            </li>
+              <p>{c.text}</p>
+            </div>
           ))}
-        </ul>
+        </div>
       </section>
-      {/* FOOTER */}
+
+      {/* ---------- FOOTER ---------- */}
       <footer>
         <p>{t("footer.text")}</p>
       </footer>
@@ -226,4 +191,7 @@ function Home() {
   );
 }
 
-export default Home;
+/* ----- PropTypes (ESLint happy) ----- */
+Home.propTypes = {
+  currentLang: PropTypes.string.isRequired,
+};

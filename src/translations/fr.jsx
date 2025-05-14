@@ -1,5 +1,14 @@
 // translations/fr.js
 export default {
+
+  // fr.js
+nav: {
+  home: "Accueil",
+  contact: "Contact",
+  login: "Connexion"
+},
+
+
   header: {
     title: "Portfolio de Jarred",
     adminView: "Vue Admin",

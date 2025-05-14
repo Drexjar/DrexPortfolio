@@ -1,13 +1,15 @@
-// Contact.js
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";  // Import useNavigate
+import { useState, useEffect } from "react";
 import emailjs from "emailjs-com";
 import { useTranslation } from "react-i18next";
-import "./App.css"; // or your dedicated CSS file for styling
+import PropTypes from "prop-types";
+import "./App.css";
 
-function Contact() {
-  const { t } = useTranslation();
-  const navigate = useNavigate(); // Initialize navigate
+function Contact({ currentLang }) {
+  const { t, i18n } = useTranslation();
+
+  useEffect(() => {
+    i18n.changeLanguage(currentLang);
+  }, [currentLang, i18n]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -16,47 +18,40 @@ function Contact() {
   });
   const [status, setStatus] = useState("");
 
-  // Update form state on input change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Send the email using EmailJS
   const handleSubmit = (e) => {
     e.preventDefault();
-
     emailjs
       .send(
-        "service_kaqhphn", // Replace with your EmailJS service ID
-        "template_g177rv8", // Replace with your EmailJS template ID
+        "service_kaqhphn",
+        "template_g177rv8",
         {
           from_name: formData.name,
           from_email: formData.email,
           message: formData.message
         },
-        "K6TxBnD8C6VYtCnaA" // Replace with your EmailJS user ID or public key
+        "K6TxBnD8C6VYtCnaA"
       )
       .then(
-        (response) => {
-          console.log("SUCCESS!", response.status, response.text);
+        () => {
           setStatus("SUCCESS");
           setFormData({ name: "", email: "", message: "" });
         },
-        (error) => {
-          console.log("FAILED...", error);
-          setStatus("FAILED");
-        }
+        () => setStatus("FAILED")
       );
   };
 
   return (
     <div className="contact-container">
-      <h2>{t("contact.title", "Contact Me")}</h2>
+      <h2>{t("contact.title")}</h2>
       <form onSubmit={handleSubmit} className="contact-form">
         <input
           type="text"
           name="name"
-          placeholder={t("contact.name", "Your Name")}
+          placeholder={t("contact.name")}
           value={formData.name}
           onChange={handleChange}
           required
@@ -64,36 +59,32 @@ function Contact() {
         <input
           type="email"
           name="email"
-          placeholder={t("contact.email", "Your Email")}
+          placeholder={t("contact.email")}
           value={formData.email}
           onChange={handleChange}
           required
         />
         <textarea
           name="message"
-          placeholder={t("contact.message", "Your Message")}
+          placeholder={t("contact.message")}
           value={formData.message}
           onChange={handleChange}
           required
         />
-        <button type="submit">{t("contact.submit", "Send Message")}</button>
+        <button type="submit">{t("contact.submit")}</button>
       </form>
       {status === "SUCCESS" && (
-        <p className="success-message">
-          {t("contact.success", "Your message has been sent!")}
-        </p>
+        <p className="success-message">{t("contact.success")}</p>
       )}
       {status === "FAILED" && (
-        <p className="error-message">
-          {t("contact.failure", "There was an error sending your message. Please try again later.")}
-        </p>
+        <p className="error-message">{t("contact.failure")}</p>
       )}
-      {/* Navigation Button to return to homepage */}
-      <button onClick={() => navigate("/")} className="return-home-btn">
-        {t("contact.returnHome", "Return to Homepage")}
-      </button>
     </div>
   );
 }
+
+Contact.propTypes = {
+  currentLang: PropTypes.string.isRequired,
+};
 
 export default Contact;

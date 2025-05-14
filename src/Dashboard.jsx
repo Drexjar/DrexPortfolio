@@ -14,7 +14,7 @@ import {
 import { db, auth } from "./firebase";
 import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import "./App.css";
+import "./Dashboard.css";
 
 function Dashboard() {
   const navigate = useNavigate();

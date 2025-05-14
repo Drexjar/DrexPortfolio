@@ -1,10 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebase";
+import PropTypes from "prop-types";
 
-function AdminLogin() {
+function AdminLogin({ currentLang }) {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    i18n.changeLanguage(currentLang);
+  }, [currentLang, i18n]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -12,24 +20,20 @@ function AdminLogin() {
     e.preventDefault();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      const idTokenResult = await user.getIdTokenResult();
-
-      // If user is an admin, go to dashboard
+      const idTokenResult = await userCredential.user.getIdTokenResult();
       if (idTokenResult.claims.admin) {
         navigate("/dashboard");
       } else {
         alert("You do not have admin privileges.");
       }
-    } catch (error) {
-      console.error("Login error:", error.message);
+    } catch {
       alert("Invalid login credentials.");
     }
   };
 
   return (
     <div className="login-section">
-      <h2>Login</h2>
+      <h2>{t("nav.login")}</h2>
       <form onSubmit={handleLogin} className="login-form">
         <input
           type="email"
@@ -45,15 +49,14 @@ function AdminLogin() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit">Login</button>
+        <button type="submit">{t("nav.login")}</button>
       </form>
-
-      {/* Button to return to homepage */}
-      <button onClick={() => navigate("/")} className="return-home-btn">
-        Return to Homepage
-      </button>
     </div>
   );
 }
+
+AdminLogin.propTypes = {
+  currentLang: PropTypes.string.isRequired,
+};
 
 export default AdminLogin;

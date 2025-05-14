@@ -1,59 +1,66 @@
-// App.js
-import './i18n';
+import "./i18n";
+import "./App.css";
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
-import "./App.css";
+
+import NavBar from "./NavBar";
 import Home from "./Home";
+import Contact from "./Contact";
 import AdminLogin from "./AdminLogin";
 import Dashboard from "./Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
-import Contact from "./Contact"; // Import the new Contact component
 
-function App() {
+/**
+ *  App – the top‑level router wrapper
+ */
+export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentLang, setCurrentLang] = useState("en");
 
-  // Check Firebase auth state on mount/changes
+  // Detect admin claim once
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const idTokenResult = await user.getIdTokenResult();
-        // Assumes a custom claim "admin" was set on the user
-        setIsAdmin(idTokenResult.claims.admin || false);
-      } else {
-        setIsAdmin(false);
-      }
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) return setIsAdmin(false);
+      const { claims } = await user.getIdTokenResult();
+      setIsAdmin(!!claims.admin);
     });
-    return () => unsubscribe();
+    return unsub;
   }, []);
+
+  const toggleLanguage = () =>
+    setCurrentLang((prev) => (prev === "en" ? "fr" : "en"));
 
   return (
     <Router>
-      <Routes>
-        {/* Public portfolio page */}
-        <Route path="/" element={<Home />} />
+      <NavBar toggleLanguage={toggleLanguage} currentLang={currentLang} />
 
-        {/* Contact page */}
-        <Route path="/contact" element={<Contact />} />
+      {/* Lazy routes wrapped in Suspense to avoid first‑load blanks */}
+      <Suspense fallback={<div className="loading">Loading…</div>}>
+        <Routes>
+          <Route
+            path="/"
+            element={<Home currentLang={currentLang} />}
+          />
 
-        {/* Admin login page */}
-        <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/contact" element={<Contact currentLang={currentLang} />} />
+          <Route path="/admin" element={<AdminLogin currentLang={currentLang} />}/>
 
-        {/* Protected dashboard (only for admin users) */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute isAdmin={isAdmin}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute isAdmin={isAdmin}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* You can add more routes or a catch-all route here */}
-      </Routes>
+          {/* fallback route */}
+          <Route path="*" element={<Home currentLang={currentLang} />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }
-
-export default App;

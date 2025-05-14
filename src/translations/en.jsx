@@ -1,5 +1,13 @@
 // translations/en.js
+
 export default {
+
+  nav: {
+    home: "Home",
+    contact: "Contact",
+    login: "Login"
+  },
+  
   header: {
     title: "Jarred Portfolio",
     adminView: "Admin View",
